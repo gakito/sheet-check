@@ -18,11 +18,6 @@ This is a Python script that reads a list of hosts from an Excel file and pings 
   - socket
   - tkinter (for GUI)
 
-You can install the required packages using `pip`:
-```bash
-pip install pandas openpyxl
-```
-
 ## Usage
 - Place your Excel file with a list of hosts in a folder.
 - Run the script and select the Excel file using the GUI.
