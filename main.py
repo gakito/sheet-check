@@ -19,10 +19,11 @@ def select_file():
 
 # Function to ping a host
 def ping_host(row):
+    # Get hostname from Host column
+    host = str(row["Host"]).strip()
     # Find the first column that contains "IP" in its name (case-insensitive)
     ip_column = next((col.strip() for col in row.keys() if "ip" in col.lower().strip()), None)
-    host = str(row["Host"]).strip()
-    ip_from_file = str(row[ip_column]).strip() if ip_column and row[ip_column] else None  # Get the IP from detected column
+    ip_from_file = str(row[ip_column]).strip() if ip_column and row[ip_column] else None  # Get the IP from detected column  
     
     try:
         # Step 1: Try to resolve DNS
@@ -32,9 +33,9 @@ def ping_host(row):
         if pd.notna(ip_from_file):
             ip_address = ip_from_file
         else: 
-            return host, "DNS Failure and no IP available"  # Hostname does not resolve
+            return host, "DNS Failure and no IP available"  # Hostname does not resolve and there's no IP 
     
-    # Step 2: If DNS resolves, attempt to ping
+    # Step 3: If DNS resolves, attempt to ping
     param = "-n" if platform.system().lower() == "windows" else "-c"
     command = ["ping", param, "1", host]
     
@@ -44,14 +45,12 @@ def ping_host(row):
         if output.returncode == 0:
             return host, "Reachable"
         else:
-            # Step 2: Host unreachable, try to ping the IP address
+            # Step 4: Host unreachable, try to ping the IP address
             command = ["ping", param, "1", ip_address]
             output = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             # Return result for IP ping
             return host, "Only IP reachable" if output.returncode == 0 else "Unreachable"
-        
     except Exception as e:
-
         return host, ip_address, f"Error: {e}"
     
 # Let user choose the file
@@ -74,12 +73,10 @@ df = df[df["Host"].notna()]  # Removes NaN values
 
 # Multi-threaded execution of ping_host function
 with ThreadPoolExecutor(max_workers=200) as executor:  # Adjust the number of threads as needed
-    results = list(executor.map(ping_host, df.to_dict(orient="records")))
+    results = list(executor.map(ping_host, df.to_dict(orient="records"))) # Creates a list of hosts and their ping status
 
-print (results)
 
-for result in results:
-    print(result)
+# for result in results: print(result)
 
 # Store results in DataFrame
 df["Status"] = [status for _, status in results]
